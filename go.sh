@@ -1,35 +1,21 @@
 #!/bin/bash
 
 # configuration
-jekyll_post_dir="<jekyll_dir>/_posts"
-api_key_loc="<location of file containing TextRazor API key>"
+jekyll_post_dir="/home/z0/cbdinfo/_posts"
+api_key_loc="/home/z0/.textrazorapi.key"
 
 newspaper3k(){
 
     # send link to newspaper3k
-    article_data=$(python scrape.py $link)
+    article_data=$(python scrape.py $link;)
 
-    # assign each line in data.txt to array
-    readarray data < data.txt
-
-    # for each value in array
-    for ((i = 0; i < ${#data[@]}; ++i)); do
-
-        # check if value is null
-        if [  "${data[i]}" = $'\n' ]; then
-
-            # if value is null, assign text "unknown" to value
-            data[i]="unknown"
-
-        fi
-
-    done
-
-    # put array into identified vars
-    Author=${data[0]}
-    Title=$(echo "${data[1]}" | tr -d '[\n]')
-    Summary=${data[2]}
     Date=$(date '+%Y-%m-%d')
+
+    sed -n '2{s/^$/unknown/;s/^/author: /;p;q;}' author.txt
+
+    Author=$(cat author.txt)
+    Title=$(cat title.txt)
+    Summary=$(cat summary.txt)
 
     # output info
     echo "author: $Author";echo;echo
@@ -42,7 +28,7 @@ newspaper3k(){
 
 textrazor(){
 
-    api_key_value=`cat $api_key_loc`
+    api_key_value=$(cat $api_key_loc)
 
     echo "Fetching data from TextRazor API...";echo
 
@@ -104,13 +90,15 @@ create_post(){
     # if verified
     if [[ $REPLY =~ ^[Yy]$ ]]; then
 
-        echo "Category set to $categories"
+        sorted_categories=$(echo $categories | xargs -n1 | sort | xargs)
+
+        echo "Categories set to: $sorted_categories"
 
         # create url friendly post name
         mod_url="$(echo -e "${Title}" | iconv -t ascii//TRANSLIT | sed -r s/[^a-zA-Z0-9]+/-/g | sed -r s/^-+\|-+$//g | tr A-Z a-z)"
 
         # reformat category input
-        mod_categories="$(echo -e "$categories" | sed 's/ /\n- /g;1s/^/- /')"
+        mod_categories="$(echo -e "$sorted_categories" | sed 's/ /\n- /g;1s/^/- /')"
 
         # generate filename
         mod_filename="$Date-$mod_url"
@@ -126,7 +114,7 @@ create_post(){
 		mod_tags="$(echo -e "tags: [$extracted_tags]"  | sed -z 's/\n/,/g;s/,$/\n/')"
 
         # write post
-        echo -e "---\\nlayout: post\\ntitle: \"$Title\"\\ndate: $Date\\ncategories:\\n$mod_categories\\nauthor: $Author\\n$mod_tags\\n---\\n\\n\\n$mod_summary\\n\\n[Visit Link]($link){:target=\"_blank\" rel=\"noopener\"}\\n\\n" > $jekyll_post_dir/$mod_filename.md
+        echo -e "---\\nlayout: post\\ntitle: \"$Title\"\\ndate: $Date\\ncategories:\\n$mod_categories\\nauthor: $Author\\n$mod_tags\\n---\\n\\n\\n$Summary\\n\\n[Visit Link]($link){:target=\"_blank\" rel=\"noopener\"}\\n\\n" > $jekyll_post_dir/$mod_filename.md
 
     else
 
