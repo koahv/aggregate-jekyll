@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # configuration
-jekyll_post_dir="/home/z0/cbdinfo/_posts"
-api_key_loc="/home/z0/.textrazorapi.key"
+jekyll_post_dir="<jekyll_dir>/_posts"
+api_key_loc="<location of file containing TextRazor API key"
 
 newspaper3k(){
 
